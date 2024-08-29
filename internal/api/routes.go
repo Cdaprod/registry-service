@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-	"yourproject/internal/storage"
+	"github.com/Cdaprod/registry-service/internal/storage"
 )
 
 func SetupRoutes(r *mux.Router, store *storage.MemoryStore, logger *zap.Logger) {

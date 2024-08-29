@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"github.com/cdaprod/registry-service/pkg/builtins"
 )
 
 // Registerable is an interface for any item that can be registered
@@ -114,25 +115,17 @@ func (s *RegistryServer) SetupRoutes() *http.ServeMux {
 	return mux
 }
 
-// Example usage
-func main() {
-	registry := NewCentralRegistry()
-	server := NewRegistryServer(registry)
+// // Example usage
+// func main() {
+// 	registry := NewCentralRegistry()
+// 	server := NewRegistryServer(registry)
 	
-	// Register built-in components
-	registry.Register(&BuiltinAPI{ID: "repocate", Type: "API", Name: "Repocate API"})
-	registry.Register(&BuiltinAPI{ID: "minio", Type: "API", Name: "MinIO API"})
+//     // Initialize BuiltinLoader and load built-in plugins
+//     builtinLoader := builtins.NewBuiltinLoader(reg, "pkg/plugins/")
+//     if err := builtinLoader.LoadAll(); err != nil {
+//         fmt.Printf("Error loading built-ins: %v\n", err)
+//     }
 	
-	// Start the HTTP server
-	http.ListenAndServe(":8080", server.SetupRoutes())
-}
-
-// BuiltinAPI is an example of a registerable item
-type BuiltinAPI struct {
-	ID   string
-	Type string
-	Name string
-}
-
-func (a *BuiltinAPI) GetID() string   { return a.ID }
-func (a *BuiltinAPI) GetType() string { return a.Type }
+// 	// Start the HTTP server
+// 	http.ListenAndServe(":8080", server.SetupRoutes())
+// }

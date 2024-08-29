@@ -10,9 +10,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 	"go.uber.org/zap"
-	"yourproject/internal/api"
-	"yourproject/internal/registry"
-	"yourproject/pkg/logger"
+	"github.com/Cdaprod/registry-service/internal/api"
+	"github.com/Cdaprod/registry-service/internal/registry"
+	"github.com/Cdaprod/registry-service/pkg/builtins"
+	"github.com/Cdaprod/registry-service/pkg/logger"
 )
 
 //go:embed web/build
@@ -29,6 +30,12 @@ func main() {
 	// Add specific registries
 	rs.AddRegistry("apis", registry.NewBaseRegistry(l))
 	rs.AddRegistry("components", registry.NewBaseRegistry(l))
+
+	// Initialize BuiltinLoader and load built-in plugins
+	builtinLoader := builtins.NewBuiltinLoader(rs, "pkg/plugins/")
+	if err := builtinLoader.LoadAll(); err != nil {
+		l.Fatal("Error loading built-ins", zap.Error(err))
+	}
 
 	// Set up router
 	r := mux.NewRouter()

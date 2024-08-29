@@ -1,0 +1,63 @@
+syntax = "proto3";
+
+package registryservice;
+
+// RegisterableItem represents a generic item that can be registered in the registry.
+message RegisterableItem {
+  string id = 1;           // Unique identifier for the item
+  string type = 2;         // Type of the item (e.g., GitHubRepo, DockerContainer)
+  string name = 3;         // Human-readable name for the item
+  map<string, string> metadata = 4; // Additional metadata about the item
+}
+
+// RegisterItemRequest is the request message for registering a new item.
+message RegisterItemRequest {
+  RegisterableItem item = 1;  // The item to register
+}
+
+// RegisterItemResponse is the response message after an item registration attempt.
+message RegisterItemResponse {
+  bool success = 1;       // Indicates if the registration was successful
+  string message = 2;     // Additional message or error description
+}
+
+// GetItemRequest is the request message for retrieving an item by ID.
+message GetItemRequest {
+  string id = 1;          // ID of the item to retrieve
+}
+
+// GetItemResponse is the response message containing the requested item.
+message GetItemResponse {
+  RegisterableItem item = 1;  // The requested item
+  bool found = 2;        // Indicates if the item was found
+  string message = 3;    // Additional message or error description
+}
+
+// ListItemsRequest is the request message for listing all registered items.
+message ListItemsRequest {
+  string type = 1;        // Optional: Filter items by type
+}
+
+// ListItemsResponse is the response message containing the list of registered items.
+message ListItemsResponse {
+  repeated RegisterableItem items = 1;  // List of all registered items
+}
+
+// UnregisterItemRequest is the request message for unregistering an item by ID.
+message UnregisterItemRequest {
+  string id = 1;          // ID of the item to unregister
+}
+
+// UnregisterItemResponse is the response message after an item is unregistered.
+message UnregisterItemResponse {
+  bool success = 1;       // Indicates if the unregistration was successful
+  string message = 2;     // Additional message or error description
+}
+
+// RegistryService defines the service for managing registerable items.
+service RegistryService {
+  rpc RegisterItem(RegisterItemRequest) returns (RegisterItemResponse);
+  rpc GetItem(GetItemRequest) returns (GetItemResponse);
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
+  rpc UnregisterItem(UnregisterItemRequest) returns (UnregisterItemResponse);
+}

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"yourproject/internal/registry"
+	"github.com/Cdaprod/registry-service/internal/registry"
 )
 
 // MemoryStorage implements in-memory storage for Items

@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-	"yourproject/internal/registry"
-	"yourproject/internal/storage"
+	"github.com/Cdaprod/registry-service/internal/registry"
+	"github.com/Cdaprod/registry-service/internal/storage"
 )
 
 type Handler struct {
