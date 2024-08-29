@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  registry-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8080"
+    environment:
+      - LOG_LEVEL=info
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # You can add more services here if needed, such as a database
+  # db:
+  #   image: postgres:13
+  #   environment:
+  #     POSTGRES_DB: registrydb
+  #     POSTGRES_USER: registryuser
+  #     POSTGRES_PASSWORD: registrypass
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  # postgres_data:
+  data:
