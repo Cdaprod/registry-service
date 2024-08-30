@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gorilla/mux"
-	"github.com/rs/cors"
-	"go.uber.org/zap"
 	"github.com/Cdaprod/registry-service/internal/api"
 	"github.com/Cdaprod/registry-service/internal/registry"
 	"github.com/Cdaprod/registry-service/pkg/builtins"
 	"github.com/Cdaprod/registry-service/pkg/logger"
+	"github.com/gorilla/mux"
+	"github.com/rs/cors"
+	"go.uber.org/zap"
 )
 
-//go:embed web/build
+//go:embed ../../web/build/*
 var webUI embed.FS
 
 func main() {

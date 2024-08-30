@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
-	"github.com/cdaprod/registry-service/pkg/builtins"
 )
 
 // Registerable is an interface for any item that can be registered
@@ -119,13 +118,13 @@ func (s *RegistryServer) SetupRoutes() *http.ServeMux {
 // func main() {
 // 	registry := NewCentralRegistry()
 // 	server := NewRegistryServer(registry)
-	
+
 //     // Initialize BuiltinLoader and load built-in plugins
 //     builtinLoader := builtins.NewBuiltinLoader(reg, "pkg/plugins/")
 //     if err := builtinLoader.LoadAll(); err != nil {
 //         fmt.Printf("Error loading built-ins: %v\n", err)
 //     }
-	
+
 // 	// Start the HTTP server
 // 	http.ListenAndServe(":8080", server.SetupRoutes())
 // }

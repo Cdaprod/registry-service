@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 	"github.com/Cdaprod/registry-service/internal/registry"
 	"github.com/Cdaprod/registry-service/internal/storage"
+	"github.com/gorilla/mux"
+	"go.uber.org/zap"
 )
 
 type Handler struct {
