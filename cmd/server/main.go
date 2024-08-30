@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap"
 )
 
-//go:embed ../../web/build/*
+//go:embed web/build/**/*
 var webUI embed.FS
 
 func main() {
