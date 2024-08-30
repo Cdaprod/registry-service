@@ -38,7 +38,8 @@ message ListItemsRequest {
   string type = 1;        // Optional: Filter items by type
 }
 
-// ListItemsResponse is the response message containing the list of registered items.
+// ListItemsResponse is the response message containing the list of registered items.  
+ 
 message ListItemsResponse {
   repeated RegisterableItem items = 1;  // List of all registered items
 }
