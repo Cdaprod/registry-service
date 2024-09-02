@@ -74,16 +74,16 @@ func (ms *MemoryStorage) CreateItem(item *registry.Item) (*registry.Item, error)
 	return item, nil
 }
 
-// GetAsRegisterable retrieves an item from the storage and returns it as a Registerable interface
-func (ms *MemoryStorage) GetAsRegisterable(id string) (registry.Registerable, bool) {
-    ms.mu.RLock()
-    defer ms.mu.RUnlock()
+// Get retrieves an item from the storage and returns it as a Registerable interface
+func (ms *MemoryStorage) Get(id string) (registry.Registerable, bool) {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
 
-    item, exists := ms.items[id]
-    if !exists || item.IsDeleted() {
-        return nil, false
-    }
-    return item, true
+	item, exists := ms.items[id]
+	if !exists || item.IsDeleted() {
+		return nil, false
+	}
+	return item, true
 }
 
 // GetItem retrieves an Item from the storage
