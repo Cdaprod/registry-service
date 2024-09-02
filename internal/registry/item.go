@@ -11,15 +11,16 @@ import (
 
 // Item represents an item in the registry with metadata and timestamps
 type Item struct {
-	ID        string                 `json:"id"`
-	Type      string                 `json:"type"`
-	Name      string                 `json:"name"`
-	Metadata  map[string]interface{} `json:"metadata"`
-	CreatedAt time.Time              `json:"createdAt"`
-	UpdatedAt time.Time              `json:"updatedAt"`
-	Version   int64                  `json:"version"`
-	deleted   bool                   // field to track if the item is deleted
-	mu        sync.RWMutex           // mutex for thread-safe operations
+    ID           string                 `json:"id"`
+    Type         string                 `json:"type"`
+    Name         string                 `json:"name"`
+    RegistryName string                 `json:"registryName"`  // New field
+    Metadata     map[string]interface{} `json:"metadata"`
+    CreatedAt    time.Time              `json:"createdAt"`
+    UpdatedAt    time.Time              `json:"updatedAt"`
+    Version      int64                  `json:"version"`
+    deleted      bool                   // field to track if the item is deleted
+    mu           sync.RWMutex           // mutex for thread-safe operations
 }
 
 // GetID returns the ID of the item

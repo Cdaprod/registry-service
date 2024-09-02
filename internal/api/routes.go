@@ -59,11 +59,9 @@ func (h *Handler) ListRegistryItems(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     registryName := vars["name"]
 
-    // For now, let's return mock items for each registry
-    items := []map[string]string{
-        {"id": "item1", "type": "Type1"},
-        {"id": "item2", "type": "Type2"},
-    }
+    // Use the new method to list items by registry name
+    items := h.store.ListByRegistryName(registryName)
+
     json.NewEncoder(w).Encode(items)
 }
 

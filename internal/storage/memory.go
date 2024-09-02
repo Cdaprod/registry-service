@@ -23,27 +23,30 @@ func NewMemoryStorage() *MemoryStorage {
 }
 
 // Register adds or updates an Item in the storage
+// Register adds or updates an Item in the storage
 func (ms *MemoryStorage) Register(item registry.Registerable) error {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
+    ms.mu.Lock()
+    defer ms.mu.Unlock()
 
-	itemObj, ok := item.(*registry.Item)
-	if !ok {
-		return errors.New("invalid item type")
-	}
+    itemObj, ok := item.(*registry.Item)
+    if !ok {
+        return errors.New("invalid item type")
+    }
 
-	if existing, exists := ms.items[itemObj.ID]; exists {
-		// Update existing item
-		existing.Name = itemObj.Name
-		existing.Metadata = itemObj.Metadata
-		existing.Version++
-	} else {
-		// Create new item
-		itemObj.Version = 1
-		ms.items[itemObj.ID] = itemObj
-	}
+    if itemObj.RegistryName == "" {
+        return errors.New("registry name must be set")
+    }
 
-	return nil
+    if existing, exists := ms.items[itemObj.ID]; exists {
+        existing.Name = itemObj.Name
+        existing.Metadata = itemObj.Metadata
+        existing.Version++
+    } else {
+        itemObj.Version = 1
+        ms.items[itemObj.ID] = itemObj
+    }
+
+    return nil
 }
 
 // Get retrieves an item from the storage
@@ -100,6 +103,21 @@ func (ms *MemoryStorage) ListByType(itemType string) []registry.Registerable {
 	}
 
 	return result
+}
+
+// ListByRegistryName returns all non-deleted Items of a specific registry name
+func (ms *MemoryStorage) ListByRegistryName(registryName string) []registry.Registerable {
+    ms.mu.RLock()
+    defer ms.mu.RUnlock()
+
+    var result []registry.Registerable
+    for _, item := range ms.items {
+        if !item.IsDeleted() && item.RegistryName == registryName {
+            result = append(result, item)
+        }
+    }
+
+    return result
 }
 
 // ListPaginated returns a slice of non-deleted Items with pagination support
