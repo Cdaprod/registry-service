@@ -18,6 +18,32 @@ import (
     "go.uber.org/zap"
 )
 
+func setCorrectMIMEType(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case strings.HasSuffix(r.URL.Path, ".js"):
+			w.Header().Set("Content-Type", "application/javascript")
+		case strings.HasSuffix(r.URL.Path, ".css"):
+			w.Header().Set("Content-Type", "text/css")
+		case strings.HasSuffix(r.URL.Path, ".html"):
+			w.Header().Set("Content-Type", "text/html")
+		case strings.HasSuffix(r.URL.Path, ".json"):
+			w.Header().Set("Content-Type", "application/json")
+		case strings.HasSuffix(r.URL.Path, ".png"):
+			w.Header().Set("Content-Type", "image/png")
+		case strings.HasSuffix(r.URL.Path, ".jpg"), strings.HasSuffix(r.URL.Path, ".jpeg"):
+			w.Header().Set("Content-Type", "image/jpeg")
+		case strings.HasSuffix(r.URL.Path, ".gif"):
+			w.Header().Set("Content-Type", "image/gif")
+		case strings.HasSuffix(r.URL.Path, ".svg"):
+			w.Header().Set("Content-Type", "image/svg+xml")
+		default:
+			w.Header().Set("Content-Type", "text/plain") // Default MIME type
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
     // Initialize logger
     l, err := logger.NewLogger()
@@ -41,7 +67,9 @@ func main() {
 
     // Serve static files from the web/build directory
     fs := http.FileServer(http.Dir("./web/build"))
-    r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+    
+    // Apply the middleware to the static file handler
+    r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
 
     // Serve index.html for any other routes
     r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
