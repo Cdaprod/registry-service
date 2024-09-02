@@ -23,6 +23,21 @@ func NewHandler(store *storage.MemoryStorage, logger *zap.Logger) *Handler {
     }
 }
 
+func (h *Handler) HomeHandler(w http.ResponseWriter, r *http.Request) {
+    w.Write([]byte("Welcome to the Registry Service!"))
+}
+
+func (h *Handler) HealthCheck(w http.ResponseWriter, r *http.Request) {
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("OK"))
+}
+
+func (h *Handler) ServeDocs(w http.ResponseWriter, r *http.Request) {
+    // Implement API documentation serving (e.g., Swagger UI)
+    w.Write([]byte("API Documentation (To be implemented)"))
+}
+
+
 func (h *Handler) CreateItem(w http.ResponseWriter, r *http.Request) {
     var item registry.Item
     if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
@@ -110,4 +125,17 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(items)
+}
+
+// Add a new method for error responses
+func (h *Handler) respondWithError(w http.ResponseWriter, code int, message string) {
+    h.respondWithJSON(w, code, map[string]string{"error": message})
+}
+
+// Add a new method for JSON responses
+func (h *Handler) respondWithJSON(w http.ResponseWriter, code int, payload interface{}) {
+    response, _ := json.Marshal(payload)
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(code)
+    w.Write(response)
 }
