@@ -41,18 +41,36 @@ func setCorrectMIMEType(next http.Handler) http.Handler {
     })
 }
 
+func setCorrectMIMEType(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        switch {
+        case strings.HasSuffix(r.URL.Path, ".js"):
+            w.Header().Set("Content-Type", "application/javascript")
+        case strings.HasSuffix(r.URL.Path, ".css"):
+            w.Header().Set("Content-Type", "text/css")
+        case strings.HasSuffix(r.URL.Path, ".html"):
+            w.Header().Set("Content-Type", "text/html")
+        case strings.HasSuffix(r.URL.Path, ".json"):
+            w.Header().Set("Content-Type", "application/json")
+        case strings.HasSuffix(r.URL.Path, ".png"):
+            w.Header().Set("Content-Type", "image/png")
+        case strings.HasSuffix(r.URL.Path, ".jpg"), strings.HasSuffix(r.URL.Path, ".jpeg"):
+            w.Header().Set("Content-Type", "image/jpeg")
+        case strings.HasSuffix(r.URL.Path, ".gif"):
+            w.Header().Set("Content-Type", "image/gif")
+        case strings.HasSuffix(r.URL.Path, ".svg"):
+            w.Header().Set("Content-Type", "image/svg+xml")
+        default:
+            w.Header().Set("Content-Type", "text/plain") // Default MIME type
+        }
+        next.ServeHTTP(w, r)
+    })
+}
 // Serve static files correctly
 r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
 
 // Serve React app index.html for all other routes
-r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // Ensure you are not erroneously serving index.html for static files
-    if _, err := os.Stat(filepath.Join("./web/build", r.URL.Path)); os.IsNotExist(err) {
-        http.ServeFile(w, r, "./web/build/index.html")
-    } else {
-        http.NotFound(w, r)
-    }
-})
+
 
 // initializeServer sets up and starts the HTTP server with all configurations.
 func initializeServer(router http.Handler, bindAddr string, l *zap.Logger) *http.Server {
@@ -118,9 +136,14 @@ func main() {
     r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
 
     // Serve index.html for any non-static file requests (fallback for React Router)
-    r.PathPrefix("/").Handler(setCorrectMIMEType(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "./web/build/index.html")
-    })))
+    r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Ensure you are not erroneously serving index.html for static files
+        if _, err := os.Stat(filepath.Join("./web/build", r.URL.Path)); os.IsNotExist(err) {
+            http.ServeFile(w, r, "./web/build/index.html")
+        } else {
+            http.NotFound(w, r)
+        }
+    })
 
     // Determine port and bind address
     port := os.Getenv("PORT")
