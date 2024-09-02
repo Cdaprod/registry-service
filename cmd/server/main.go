@@ -1,11 +1,14 @@
 package main
 
 import (
+    "context"
     "log"
+    "mime"
+    "net/http"
     "os"
     "os/signal"
-    "net/http"
-    "context"
+    "path/filepath"
+    "strings"
     "syscall"
     "time"
 
@@ -18,89 +21,27 @@ import (
     "go.uber.org/zap"
 )
 
+// setCorrectMIMEType sets the MIME type for static files based on their extension.
 func setCorrectMIMEType(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case strings.HasSuffix(r.URL.Path, ".js"):
-			w.Header().Set("Content-Type", "application/javascript")
-		case strings.HasSuffix(r.URL.Path, ".css"):
-			w.Header().Set("Content-Type", "text/css")
-		case strings.HasSuffix(r.URL.Path, ".html"):
-			w.Header().Set("Content-Type", "text/html")
-		case strings.HasSuffix(r.URL.Path, ".json"):
-			w.Header().Set("Content-Type", "application/json")
-		case strings.HasSuffix(r.URL.Path, ".png"):
-			w.Header().Set("Content-Type", "image/png")
-		case strings.HasSuffix(r.URL.Path, ".jpg"), strings.HasSuffix(r.URL.Path, ".jpeg"):
-			w.Header().Set("Content-Type", "image/jpeg")
-		case strings.HasSuffix(r.URL.Path, ".gif"):
-			w.Header().Set("Content-Type", "image/gif")
-		case strings.HasSuffix(r.URL.Path, ".svg"):
-			w.Header().Set("Content-Type", "image/svg+xml")
-		default:
-			w.Header().Set("Content-Type", "text/plain") // Default MIME type
-		}
-		next.ServeHTTP(w, r)
-	})
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        ext := filepath.Ext(r.URL.Path)
+        if mimeType := mime.TypeByExtension(ext); mimeType != "" {
+            w.Header().Set("Content-Type", mimeType)
+        } else {
+            w.Header().Set("Content-Type", "application/octet-stream")
+        }
+        w.Header().Set("X-Content-Type-Options", "nosniff") // Prevent MIME type sniffing
+        next.ServeHTTP(w, r)
+    })
 }
 
-func main() {
-    // Initialize logger
-    l, err := logger.NewLogger()
-    if err != nil {
-        log.Fatalf("Failed to initialize logger: %v", err)
-    }
-    defer l.Sync()
+// initializeServer sets up and starts the HTTP server with all configurations.
+func initializeServer(router http.Handler, bindAddr string, l *zap.Logger) *http.Server {
+    l.Info("Starting server", zap.String("bind_address", bindAddr))
 
-    // Create MemoryStorage instance
-    memoryStorage := storage.NewMemoryStorage()
-
-    // Initialize BuiltinLoader and load built-in plugins
-    builtinLoader := builtins.NewBuiltinLoader(memoryStorage, "pkg/plugins/")
-    if err := builtinLoader.LoadAll(); err != nil {
-        l.Fatal("Error loading built-ins", zap.Error(err))
-    }
-
-    // Set up router using mux
-    r := mux.NewRouter()
-    api.SetupRoutes(r, memoryStorage, l)
-
-    // Serve static files from the web/build directory
-    fs := http.FileServer(http.Dir("./web/build"))
-    
-    // Apply the middleware to the static file handler
-    r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
-
-    // Serve index.html for any other routes
-    r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "./web/build/index.html")
-    })
-
-    // Determine port and bind address
-    port := os.Getenv("PORT")
-    if port == "" {
-        port = "7777"
-    }
-    bindAddr := "0.0.0.0:" + port
-
-    // Set up CORS
-    c := cors.New(cors.Options{
-        AllowedOrigins: []string{"*"},  // Allow all origins for staged environment
-        AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-        AllowedHeaders: []string{"Content-Type", "Authorization"},
-    })
-
-    // Wrap our router with the CORS handler
-    handler := c.Handler(r)
-
-    // Start server
-    l.Info("Starting server", 
-        zap.String("port", port),
-        zap.String("bind_address", bindAddr))
-    
     server := &http.Server{
         Addr:    bindAddr,
-        Handler: handler,
+        Handler: router,
     }
 
     go func() {
@@ -110,8 +51,11 @@ func main() {
     }()
 
     l.Info("Server is ready to handle requests")
+    return server
+}
 
-    // Graceful shutdown
+// handleGracefulShutdown gracefully shuts down the server on receiving a termination signal.
+func handleGracefulShutdown(server *http.Server, l *zap.Logger) {
     quit := make(chan os.Signal, 1)
     signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
     <-quit
@@ -126,4 +70,60 @@ func main() {
     }
 
     l.Info("Server has shut down gracefully")
+}
+
+// main is the entry point for the application.
+func main() {
+    // Initialize logger
+    l, err := logger.NewLogger()
+    if err != nil {
+        log.Fatalf("Failed to initialize logger: %v", err)
+    }
+    defer l.Sync()
+
+    // Initialize in-memory storage
+    memoryStorage := storage.NewMemoryStorage()
+
+    // Load built-in plugins
+    builtinLoader := builtins.NewBuiltinLoader(memoryStorage, "pkg/plugins/")
+    if err := builtinLoader.LoadAll(); err != nil {
+        l.Fatal("Error loading built-ins", zap.Error(err))
+    }
+
+    // Set up router using mux
+    r := mux.NewRouter()
+    api.SetupRoutes(r, memoryStorage, l)
+
+    // Serve static files from the web/build directory with correct MIME types
+    fs := http.FileServer(http.Dir("./web/build"))
+    r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
+
+    // Serve index.html for any non-static file requests (fallback for React Router)
+    r.PathPrefix("/").Handler(setCorrectMIMEType(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, "./web/build/index.html")
+    })))
+
+    // Determine port and bind address
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "7777"
+    }
+    bindAddr := "0.0.0.0:" + port
+
+    // Set up CORS
+    c := cors.New(cors.Options{
+        AllowedOrigins:   []string{"*"},  // Allow all origins for staged environment
+        AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+        AllowedHeaders:   []string{"Content-Type", "Authorization"},
+        AllowCredentials: true,
+    })
+
+    // Wrap router with CORS handler
+    handler := c.Handler(r)
+
+    // Start the HTTP server
+    server := initializeServer(handler, bindAddr, l)
+
+    // Handle graceful shutdown
+    handleGracefulShutdown(server, l)
 }
