@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { AlertCircle, CheckCircle, PlusCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+//import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const RegistryDashboard = () => {
   const [registries, setRegistries] = useState([]);
@@ -12,6 +12,12 @@ const RegistryDashboard = () => {
   useEffect(() => {
     fetchRegistries();
   }, []);
+  
+  const Alert = ({ children }) => (
+    <div style={{ padding: '1rem', border: '1px solid red', borderRadius: '4px', margin: '1rem 0' }}>
+      {children}
+    </div>
+   );
 
   const fetchRegistries = async () => {
     try {
