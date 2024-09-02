@@ -24,12 +24,8 @@ func main() {
 
     // Create MemoryStorage instance
     memoryStorage := storage.NewMemoryStorage()
-    
-    // Create handler using MemoryStorage directly
-    handler := api.NewHandler(memoryStorage, l)
 
     // Initialize BuiltinLoader and load built-in plugins
-    // Note: We're using memoryStorage directly here, assuming BuiltinLoader has been updated
     builtinLoader := builtins.NewBuiltinLoader(memoryStorage, "pkg/plugins/")
     if err := builtinLoader.LoadAll(); err != nil {
         l.Fatal("Error loading built-ins", zap.Error(err))
@@ -37,7 +33,7 @@ func main() {
 
     // Set up router using mux
     r := mux.NewRouter()
-    api.SetupRoutes(r, handler)
+    api.SetupRoutes(r, memoryStorage, l)
 
     // Serve static files from the web/build directory
     staticDir := "./web/build"
