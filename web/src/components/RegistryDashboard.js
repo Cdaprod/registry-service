@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { AlertCircle, CheckCircle, PlusCircle } from 'lucide-react';
-//import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+// Simple Alert component
+const Alert = ({ title, children, variant = 'default' }) => (
+  <div className={`p-4 border rounded-md ${variant === 'destructive' ? 'border-red-500 bg-red-100' : 'border-gray-200'}`}>
+    <h3 className="text-lg font-semibold mb-2">{title}</h3>
+    <p>{children}</p>
+  </div>
+);
 
 const RegistryDashboard = () => {
   const [registries, setRegistries] = useState([]);
@@ -12,12 +19,6 @@ const RegistryDashboard = () => {
   useEffect(() => {
     fetchRegistries();
   }, []);
-  
-  const Alert = ({ children }) => (
-    <div style={{ padding: '1rem', border: '1px solid red', borderRadius: '4px', margin: '1rem 0' }}>
-      {children}
-    </div>
-   );
 
   const fetchRegistries = async () => {
     try {
@@ -59,10 +60,8 @@ const RegistryDashboard = () => {
       <h1 className="text-3xl font-bold mb-6">Registry Service Dashboard</h1>
       
       {error && (
-        <Alert variant="destructive" className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+        <Alert title="Error" variant="destructive">
+          {error}
         </Alert>
       )}
       
