@@ -12,11 +12,11 @@ import (
 )
 
 type Handler struct {
-	store  *storage.MemoryStore
+	store  *storage.MemoryStorage // Updated type name
 	logger *zap.Logger
 }
 
-func NewHandler(store *storage.MemoryStore, logger *zap.Logger) *Handler {
+func NewHandler(store *storage.MemoryStorage, logger *zap.Logger) *Handler { // Updated type name
 	return &Handler{
 		store:  store,
 		logger: logger,
@@ -94,16 +94,13 @@ func (h *Handler) DeleteItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+// ListItems is used without pagination
 func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-	items, err := h.store.ListItems(limit, offset)
-	if err != nil {
-		h.logger.Error("Failed to list items", zap.Error(err))
-		http.Error(w, "Failed to list items", http.StatusInternalServerError)
-		return
-	}
+	// Use the List function with limit and offset for pagination
+	items := h.store.List(limit, offset)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(items)

@@ -1,14 +1,12 @@
 package main
 
 import (
-	"embed"
-	"io/fs"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/Cdaprod/registry-service/internal/api"
-	"github.com/Cdaprod/registry-service/internal/registry"
+	"github.com/Cdaprod/registry-service/internal/storage"
 	"github.com/Cdaprod/registry-service/pkg/builtins"
 	"github.com/Cdaprod/registry-service/pkg/logger"
 	"github.com/gorilla/mux"
@@ -16,38 +14,31 @@ import (
 	"go.uber.org/zap"
 )
 
-//go:embed web/build/**/*
-var webUI embed.FS
-
 func main() {
 	// Initialize logger
-	l := logger.NewLogger()
+	l, err := logger.NewLogger() // Corrected to handle two return values
+	if err != nil {
+		log.Fatalf("Failed to initialize logger: %v", err)
+	}
 	defer l.Sync()
 
-	// Create RegistryService
-	rs := registry.NewRegistryService(l)
-
-	// Add specific registries
-	rs.AddRegistry("apis", registry.NewBaseRegistry(l))
-	rs.AddRegistry("components", registry.NewBaseRegistry(l))
+	// Create MemoryStorage instance for use with the API
+	memoryStorage := storage.NewMemoryStorage()
 
 	// Initialize BuiltinLoader and load built-in plugins
-	builtinLoader := builtins.NewBuiltinLoader(rs, "pkg/plugins/")
+	builtinLoader := builtins.NewBuiltinLoader(memoryStorage, "pkg/plugins/")
 	if err := builtinLoader.LoadAll(); err != nil {
 		l.Fatal("Error loading built-ins", zap.Error(err))
 	}
 
-	// Set up router
+	// Set up router using mux
 	r := mux.NewRouter()
-	api.SetupRoutes(r, rs)
+	api.SetupRoutes(r, memoryStorage, l) // Use memoryStorage instead of centralRegistry
 
-	// Serve static files for web UI
-	webUIFS, err := fs.Sub(webUI, "web/build")
-	if err != nil {
-		l.Fatal("Failed to create sub filesystem", zap.Error(err))
-	}
-
-	r.PathPrefix("/").Handler(http.FileServer(http.FS(webUIFS)))
+	// Serve static files from the web/build directory
+	staticDir := "./web/build"
+	fs := http.FileServer(http.Dir(staticDir))
+	r.PathPrefix("/").Handler(fs)
 
 	// Set up CORS
 	c := cors.New(cors.Options{

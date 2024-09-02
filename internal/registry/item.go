@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Item represents an item in the registry with metadata and timestamps
 type Item struct {
 	ID        string                 `json:"id"`
 	Type      string                 `json:"type"`
@@ -17,19 +18,58 @@ type Item struct {
 	CreatedAt time.Time              `json:"createdAt"`
 	UpdatedAt time.Time              `json:"updatedAt"`
 	Version   int64                  `json:"version"`
+	deleted   bool                   // field to track if the item is deleted
+	mu        sync.RWMutex           // mutex for thread-safe operations
 }
 
+// Update updates the item's name, version, and metadata
+func (i *Item) Update(name, itemType string, metadata map[string]interface{}) {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	i.Name = name
+	i.Type = itemType
+	i.Metadata = metadata
+	i.Version++
+	i.UpdatedAt = time.Now()
+}
+
+// IsDeleted checks if the item is marked as deleted
+func (i *Item) IsDeleted() bool {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	return i.deleted
+}
+
+// SoftDelete marks the item as deleted
+func (i *Item) SoftDelete() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	i.deleted = true
+	i.UpdatedAt = time.Now()
+}
+
+// Restore removes the deleted mark from the item
+func (i *Item) Restore() {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+	i.deleted = false
+	i.UpdatedAt = time.Now()
+}
+
+// ItemStore represents an in-memory store for items
 type ItemStore struct {
 	mu    sync.RWMutex
 	items map[string]*Item
 }
 
+// NewItemStore creates a new in-memory store for items
 func NewItemStore() *ItemStore {
 	return &ItemStore{
 		items: make(map[string]*Item),
 	}
 }
 
+// UpsertItem inserts or updates an item in the store
 func (s *ItemStore) UpsertItem(item *Item) (*Item, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -56,6 +96,7 @@ func (s *ItemStore) UpsertItem(item *Item) (*Item, error) {
 	return item, nil
 }
 
+// GetItem retrieves an item from the store by ID
 func (s *ItemStore) GetItem(id string) (*Item, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -65,24 +106,47 @@ func (s *ItemStore) GetItem(id string) (*Item, error) {
 		return nil, fmt.Errorf("item not found: %s", id)
 	}
 
+	if item.IsDeleted() {
+		return nil, fmt.Errorf("item is deleted")
+	}
+
 	return item, nil
 }
 
+// DeleteItem removes an item from the store
 func (s *ItemStore) DeleteItem(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	delete(s.items, id)
-	return nil
+	if item, exists := s.items[id]; exists {
+		item.SoftDelete()
+		return nil
+	}
+	return fmt.Errorf("item not found: %s", id)
 }
 
+// RestoreItem restores a soft-deleted item in the store
+func (s *ItemStore) RestoreItem(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if item, exists := s.items[id]; exists {
+		item.Restore()
+		return nil
+	}
+	return fmt.Errorf("item not found: %s", id)
+}
+
+// ListItems returns all non-deleted items in the store
 func (s *ItemStore) ListItems() []*Item {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	items := make([]*Item, 0, len(s.items))
 	for _, item := range s.items {
-		items = append(items, item)
+		if !item.IsDeleted() {
+			items = append(items, item)
+		}
 	}
 
 	return items
