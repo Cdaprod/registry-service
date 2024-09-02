@@ -2,6 +2,7 @@ package api
 
 import (
     "net/http"
+    "encoding/json"
 
     "github.com/Cdaprod/registry-service/internal/storage"
     "github.com/gorilla/mux"
@@ -21,6 +22,10 @@ func SetupRoutes(r *mux.Router, store *storage.MemoryStorage, logger *zap.Logger
     v1.HandleFunc("/items/{id}", handler.UpdateItem).Methods("PUT")
     v1.HandleFunc("/items/{id}", handler.DeleteItem).Methods("DELETE")
 
+    // New routes for RegistryDashboard
+    v1.HandleFunc("/registries", handler.ListRegistries).Methods("GET")
+    v1.HandleFunc("/registry/{name}/list", handler.ListRegistryItems).Methods("GET")
+
     // Health check endpoint
     r.HandleFunc("/health", handler.HealthCheck).Methods("GET")
 
@@ -33,6 +38,33 @@ func SetupRoutes(r *mux.Router, store *storage.MemoryStorage, logger *zap.Logger
     // Middleware for logging, CORS, etc.
     r.Use(loggingMiddleware(logger))
     r.Use(corsMiddleware)
+
+    // Serve static files from the web/build directory
+    fs := http.FileServer(http.Dir("./web/build"))
+    r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+    // Serve index.html for any other routes
+    r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, "./web/build/index.html")
+    })
+}
+
+func (h *Handler) ListRegistries(w http.ResponseWriter, r *http.Request) {
+    // For now, let's return a mock list of registries
+    registries := []string{"Registry1", "Registry2", "Registry3"}
+    json.NewEncoder(w).Encode(registries)
+}
+
+func (h *Handler) ListRegistryItems(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    registryName := vars["name"]
+
+    // For now, let's return mock items for each registry
+    items := []map[string]string{
+        {"id": "item1", "type": "Type1"},
+        {"id": "item2", "type": "Type2"},
+    }
+    json.NewEncoder(w).Encode(items)
 }
 
 func loggingMiddleware(logger *zap.Logger) mux.MiddlewareFunc {
