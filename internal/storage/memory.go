@@ -7,6 +7,8 @@ import (
 	"github.com/Cdaprod/registry-service/internal/registry"
 )
 
+var _ registry.Registry = (*MemoryStorage)(nil)
+
 // MemoryStorage implements in-memory storage for Items
 type MemoryStorage struct {
 	items map[string]*registry.Item
