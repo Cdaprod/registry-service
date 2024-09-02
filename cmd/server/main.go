@@ -66,10 +66,6 @@ func setCorrectMIMEType(next http.Handler) http.Handler {
         next.ServeHTTP(w, r)
     })
 }
-// Serve static files correctly
-r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
-
-// Serve React app index.html for all other routes
 
 
 // initializeServer sets up and starts the HTTP server with all configurations.
