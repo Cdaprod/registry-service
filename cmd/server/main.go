@@ -44,13 +44,6 @@ func main() {
     fs := http.FileServer(http.Dir(staticDir))
     r.PathPrefix("/").Handler(fs)
 
-    // Set up CORS
-    c := cors.New(cors.Options{
-        AllowedOrigins: []string{"*"},
-        AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
-        AllowedHeaders: []string{"Content-Type", "Authorization"},
-    })
-
     // Determine port and bind address
     port := os.Getenv("PORT")
     if port == "" {
