@@ -40,9 +40,13 @@ func main() {
     api.SetupRoutes(r, memoryStorage, l)
 
     // Serve static files from the web/build directory
-    staticDir := "./web/build"
-    fs := http.FileServer(http.Dir(staticDir))
-    r.PathPrefix("/").Handler(fs)
+    fs := http.FileServer(http.Dir("./web/build"))
+    r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
+
+    // Serve index.html for any other routes
+    r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, "./web/build/index.html")
+    })
 
     // Determine port and bind address
     port := os.Getenv("PORT")
