@@ -23,26 +23,6 @@ import (
 
 func setCorrectMIMEType(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Ensure correct MIME types
-        switch {
-        case strings.HasSuffix(r.URL.Path, ".js"):
-            w.Header().Set("Content-Type", "application/javascript")
-        case strings.HasSuffix(r.URL.Path, ".css"):
-            w.Header().Set("Content-Type", "text/css")
-        case strings.HasSuffix(r.URL.Path, ".html"):
-            w.Header().Set("Content-Type", "text/html")
-        case strings.HasSuffix(r.URL.Path, ".json"):
-            w.Header().Set("Content-Type", "application/json")
-        default:
-            w.Header().Set("Content-Type", "text/plain") // Default MIME type
-        }
-        
-        next.ServeHTTP(w, r)
-    })
-}
-
-func setCorrectMIMEType(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         switch {
         case strings.HasSuffix(r.URL.Path, ".js"):
             w.Header().Set("Content-Type", "application/javascript")
