@@ -24,6 +24,11 @@ func main() {
 
     // Create MemoryStorage instance and its adapter
     memoryStorage := storage.NewMemoryStorage()
+    
+    // Create handler using MemoryStorage directly
+    handler := api.NewHandler(memoryStorage, logger)
+
+    // If needed for other components that expect the Registry interface:
     adapter := storage.NewMemoryStorageAdapter(memoryStorage)
 
     // Initialize BuiltinLoader and load built-in plugins

@@ -12,11 +12,11 @@ import (
 )
 
 type Handler struct {
-    store  *storage.MemoryStorageAdapter
+    store  *storage.MemoryStorage
     logger *zap.Logger
 }
 
-func NewHandler(store *storage.MemoryStorageAdapter, logger *zap.Logger) *Handler {
+func NewHandler(store *storage.MemoryStorage, logger *zap.Logger) *Handler {
     return &Handler{
         store:  store,
         logger: logger,

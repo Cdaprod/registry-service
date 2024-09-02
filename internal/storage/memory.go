@@ -20,12 +20,92 @@ func NewMemoryStorage() *MemoryStorage {
 	}
 }
 
-// List returns a slice of non-deleted Items with pagination support
-func (ms *MemoryStorage) List(limit, offset int) []*registry.Item {
+// Register adds or updates an Item in the storage
+func (ms *MemoryStorage) Register(item registry.Registerable) error {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	itemObj, ok := item.(*registry.Item)
+	if !ok {
+		return errors.New("invalid item type")
+	}
+
+	if existing, exists := ms.items[itemObj.ID]; exists {
+		// Update existing item
+		existing.Name = itemObj.Name
+		existing.Metadata = itemObj.Metadata
+		existing.Version++
+	} else {
+		// Create new item
+		itemObj.Version = 1
+		ms.items[itemObj.ID] = itemObj
+	}
+
+	return nil
+}
+
+// Get retrieves an item from the storage
+func (ms *MemoryStorage) Get(id string) (registry.Registerable, bool) {
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
-	var result []*registry.Item
+	item, exists := ms.items[id]
+	if !exists || item.IsDeleted() {
+		return nil, false
+	}
+	return item, true
+}
+
+// Unregister soft-deletes an Item in the storage
+func (ms *MemoryStorage) Unregister(id string) error {
+	ms.mu.Lock()
+	defer ms.mu.Unlock()
+
+	item, ok := ms.items[id]
+	if !ok {
+		return errors.New("item not found")
+	}
+
+	item.SoftDelete()
+	return nil
+}
+
+// List returns all non-deleted Items in the storage
+func (ms *MemoryStorage) List() []registry.Registerable {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+
+	var result []registry.Registerable
+	for _, item := range ms.items {
+		if !item.IsDeleted() {
+			result = append(result, item)
+		}
+	}
+
+	return result
+}
+
+// ListByType returns all non-deleted Items of a specific type
+func (ms *MemoryStorage) ListByType(itemType string) []registry.Registerable {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+
+	var result []registry.Registerable
+	for _, item := range ms.items {
+		if !item.IsDeleted() && item.GetType() == itemType {
+			result = append(result, item)
+		}
+	}
+
+	return result
+}
+
+// ListPaginated returns a slice of non-deleted Items with pagination support
+func (ms *MemoryStorage) ListPaginated(limit, offset int) []registry.Registerable {
+	ms.mu.RLock()
+	defer ms.mu.RUnlock()
+
+	var result []registry.Registerable
 	for _, item := range ms.items {
 		if !item.IsDeleted() {
 			result = append(result, item)
@@ -34,7 +114,7 @@ func (ms *MemoryStorage) List(limit, offset int) []*registry.Item {
 
 	// Apply pagination
 	if offset > len(result) {
-		return []*registry.Item{}
+		return []registry.Registerable{}
 	}
 
 	end := offset + limit
@@ -44,6 +124,8 @@ func (ms *MemoryStorage) List(limit, offset int) []*registry.Item {
 
 	return result[offset:end]
 }
+
+// Additional methods for compatibility with existing code
 
 // ListItems returns all non-deleted Items in the storage without pagination
 func (ms *MemoryStorage) ListItems() ([]*registry.Item, error) {
@@ -62,75 +144,28 @@ func (ms *MemoryStorage) ListItems() ([]*registry.Item, error) {
 
 // CreateItem adds an Item to the storage
 func (ms *MemoryStorage) CreateItem(item *registry.Item) (*registry.Item, error) {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
-
-	if _, exists := ms.items[item.ID]; exists {
-		return nil, errors.New("item already exists")
-	}
-
-	item.Version = 1
-	ms.items[item.ID] = item
-	return item, nil
-}
-
-// Get retrieves an item from the storage and returns it as a Registerable interface
-func (ms *MemoryStorage) Get(id string) (registry.Registerable, bool) {
-	ms.mu.RLock()
-	defer ms.mu.RUnlock()
-
-	item, exists := ms.items[id]
-	if !exists || item.IsDeleted() {
-		return nil, false
-	}
-	return item, true
+	return item, ms.Register(item)
 }
 
 // GetItem retrieves an Item from the storage
 func (ms *MemoryStorage) GetItem(id string) (*registry.Item, error) {
-	ms.mu.RLock()
-	defer ms.mu.RUnlock()
-
-	item, ok := ms.items[id]
+	item, ok := ms.Get(id)
 	if !ok {
 		return nil, errors.New("item not found")
 	}
-
-	if item.IsDeleted() {
-		return nil, errors.New("item is deleted")
-	}
-
-	return item, nil
+	return item.(*registry.Item), nil
 }
 
 // UpdateItem updates an existing Item in the storage
 func (ms *MemoryStorage) UpdateItem(item *registry.Item) (*registry.Item, error) {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
-
-	existing, ok := ms.items[item.ID]
-	if !ok {
-		return nil, errors.New("item not found")
+	err := ms.Register(item)
+	if err != nil {
+		return nil, err
 	}
-
-	// Update fields
-	existing.Name = item.Name
-	existing.Metadata = item.Metadata
-	existing.Version++
-
-	return existing, nil
+	return item, nil
 }
 
 // DeleteItem soft-deletes an Item in the storage
 func (ms *MemoryStorage) DeleteItem(id string) error {
-	ms.mu.Lock()
-	defer ms.mu.Unlock()
-
-	item, ok := ms.items[id]
-	if !ok {
-		return errors.New("item not found")
-	}
-
-	item.SoftDelete()
-	return nil
+	return ms.Unregister(id)
 }
