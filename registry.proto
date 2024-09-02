@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package registryservice;
+
+import "core.proto";
+
+// RegisterableItem represents a generic item that can be registered in the registry.
+message RegisterableItem {
+  string id = 1;                          // Unique identifier for the item
+  string type = 2;                        // Type of the item (e.g., GitHubRepo, DockerContainer)
+  string name = 3;                        // Human-readable name for the item
+  map<string, string> metadata = 4;       // Additional metadata about the item
+}
+
+// RegisterItemRequest is the request message for registering a new item.
+message RegisterItemRequest {
+  core.Metadata metadata = 1;             // Metadata for traceability
+  RegisterableItem item = 2;              // The item to register
+}
+
+// RegisterItemResponse is the response message after an item registration attempt.
+message RegisterItemResponse {
+  core.BaseResponse base_response = 1;    // Base response structure
+}
+
+// GetItemRequest is the request message for retrieving an item by ID.
+message GetItemRequest {
+  core.Metadata metadata = 1;             // Metadata for traceability
+  string id = 2;                          // ID of the item to retrieve
+}
+
+// GetItemResponse is the response message containing the requested item.
+message GetItemResponse {
+  core.BaseResponse base_response = 1;    // Base response structure
+  RegisterableItem item = 2;              // The requested item
+  bool found = 3;                         // Indicates if the item was found
+}
+
+// ListItemsRequest is the request message for listing all registered items.
+message ListItemsRequest {
+  core.Metadata metadata = 1;             // Metadata for traceability
+  string type = 2;                        // Optional: Filter items by type
+}
+
+// ListItemsResponse is the response message containing the list of registered items.
+message ListItemsResponse {
+  core.BaseResponse base_response = 1;    // Base response structure
+  repeated RegisterableItem items = 2;    // List of all registered items
+}
+
+// UnregisterItemRequest is the request message for unregistering an item by ID.
+message UnregisterItemRequest {
+  core.Metadata metadata = 1;             // Metadata for traceability
+  string id = 2;                          // ID of the item to unregister
+}
+
+// UnregisterItemResponse is the response message after an item is unregistered.
+message UnregisterItemResponse {
+  core.BaseResponse base_response = 1;    // Base response structure
+}
+
+// RegistryService defines the service for managing registerable items.
+service RegistryService {
+  rpc RegisterItem(RegisterItemRequest) returns (RegisterItemResponse);
+  rpc GetItem(GetItemRequest) returns (GetItemResponse);
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
+  rpc UnregisterItem(UnregisterItemRequest) returns (UnregisterItemResponse);
+}

@@ -1,3 +1,9 @@
+# REGS - Registry Service
+
+The REGS service manages the registration and discovery of services and plugins within the Core Data Archetype (CDA) system. It provides dynamic service management, enabling easy registration, deregistration, and discovery of services.
+
+---
+
 # Registry Service
 
 Welcome to the **Registry Service**--the beating heart of the **Core Data Archetype (CDA)**! This innovative system design is all about creating a flexible, scalable, and easy-to-maintain framework for managing complex data operations. With the Registry Service, you get a powerful registry and dynamic plugin system, allowing seamless integration with tools like Docker and GitHub, making your CDA ecosystem more powerful and cohesive.
