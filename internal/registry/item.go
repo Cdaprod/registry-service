@@ -22,6 +22,16 @@ type Item struct {
 	mu        sync.RWMutex           // mutex for thread-safe operations
 }
 
+// GetID returns the ID of the item
+func (i *Item) GetID() string {
+    return i.ID
+}
+
+// GetType returns the type of the item
+func (i *Item) GetType() string {
+    return i.Type
+}
+
 // Update updates the item's name, version, and metadata
 func (i *Item) Update(name, itemType string, metadata map[string]interface{}) {
 	i.mu.Lock()
