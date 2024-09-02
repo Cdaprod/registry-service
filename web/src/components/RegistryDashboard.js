@@ -15,7 +15,7 @@ const RegistryDashboard = () => {
 
   const fetchRegistries = async () => {
     try {
-      const response = await fetch('/registries');
+      const response = await fetch('/api/v1/registries');
       const data = await response.json();
       setRegistries(data);
     } catch (err) {
@@ -25,7 +25,7 @@ const RegistryDashboard = () => {
 
   const fetchItems = async (registry) => {
     try {
-      const response = await fetch(`/registry/${registry}/list`);
+      const response = await fetch(`/api/v1/registry/${registry}/list`);
       const data = await response.json();
       setItems(data);
       setSelectedRegistry(registry);

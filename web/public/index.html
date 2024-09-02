@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Registry Service Dashboard"
-    />
     <title>Registry Service</title>
-  </head>
-  <body>
+</head>
+<body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-  </body>
+    <script>
+    window.onerror = function(message, source, lineno, colno, error) {
+        console.error('An error occurred:', message, source, lineno, colno, error);
+        document.body.innerHTML += '<p>An error occurred. Please check the console for details.</p>';
+    }
+    </script>
+</body>
 </html>
