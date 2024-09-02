@@ -74,7 +74,6 @@ func (ms *MemoryStorage) CreateItem(item *registry.Item) (*registry.Item, error)
 	return item, nil
 }
 
-<<<<<<< HEAD
 // GetAsRegisterable retrieves an item from the storage and returns it as a Registerable interface
 func (ms *MemoryStorage) GetAsRegisterable(id string) (registry.Registerable, bool) {
     ms.mu.RLock()
@@ -87,12 +86,8 @@ func (ms *MemoryStorage) GetAsRegisterable(id string) (registry.Registerable, bo
     return item, true
 }
 
-// Get retrieves an Item from the storage
-func (ms *MemoryStorage) Get(id string) (*registry.Item, error) {
-=======
 // GetItem retrieves an Item from the storage
 func (ms *MemoryStorage) GetItem(id string) (*registry.Item, error) {
->>>>>>> a8896e1 (commit updated go.mod)
 	ms.mu.RLock()
 	defer ms.mu.RUnlock()
 
