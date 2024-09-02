@@ -98,11 +98,14 @@ func (h *Handler) ListItems(w http.ResponseWriter, r *http.Request) {
     limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
     offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 
-    items, err := h.store.List(limit, offset)
-    if err != nil {
-        h.logger.Error("Failed to list items", zap.Error(err))
-        http.Error(w, "Failed to list items", http.StatusInternalServerError)
-        return
+    var items []registry.Registerable
+
+    if limit > 0 || offset > 0 {
+        // Use ListPaginated if limit or offset is specified
+        items = h.store.ListPaginated(limit, offset)
+    } else {
+        // Use List if no pagination is specified
+        items = h.store.List()
     }
 
     w.Header().Set("Content-Type", "application/json")
