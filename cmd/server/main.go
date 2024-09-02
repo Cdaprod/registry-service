@@ -21,19 +21,38 @@ import (
     "go.uber.org/zap"
 )
 
-// setCorrectMIMEType sets the MIME type for static files based on their extension.
 func setCorrectMIMEType(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        ext := filepath.Ext(r.URL.Path)
-        if mimeType := mime.TypeByExtension(ext); mimeType != "" {
-            w.Header().Set("Content-Type", mimeType)
-        } else {
-            w.Header().Set("Content-Type", "application/octet-stream")
+        // Ensure correct MIME types
+        switch {
+        case strings.HasSuffix(r.URL.Path, ".js"):
+            w.Header().Set("Content-Type", "application/javascript")
+        case strings.HasSuffix(r.URL.Path, ".css"):
+            w.Header().Set("Content-Type", "text/css")
+        case strings.HasSuffix(r.URL.Path, ".html"):
+            w.Header().Set("Content-Type", "text/html")
+        case strings.HasSuffix(r.URL.Path, ".json"):
+            w.Header().Set("Content-Type", "application/json")
+        default:
+            w.Header().Set("Content-Type", "text/plain") // Default MIME type
         }
-        w.Header().Set("X-Content-Type-Options", "nosniff") // Prevent MIME type sniffing
+        
         next.ServeHTTP(w, r)
     })
 }
+
+// Serve static files correctly
+r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
+
+// Serve React app index.html for all other routes
+r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    // Ensure you are not erroneously serving index.html for static files
+    if _, err := os.Stat(filepath.Join("./web/build", r.URL.Path)); os.IsNotExist(err) {
+        http.ServeFile(w, r, "./web/build/index.html")
+    } else {
+        http.NotFound(w, r)
+    }
+})
 
 // initializeServer sets up and starts the HTTP server with all configurations.
 func initializeServer(router http.Handler, bindAddr string, l *zap.Logger) *http.Server {
