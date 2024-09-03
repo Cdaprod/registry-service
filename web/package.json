@@ -1,8 +1,7 @@
 {
   "name": "registry-service-frontend",
   "version": "1.0.0",
-  "homepage": "/app",
-  "proxy": "http://localhost:7777",
+  "proxy": "http://localhost:7777/api/v1",
   "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.11.4",
