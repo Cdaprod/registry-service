@@ -110,15 +110,8 @@ func main() {
     fs := http.FileServer(http.Dir("./web/build"))
     r.PathPrefix("/static/").Handler(setCorrectMIMEType(http.StripPrefix("/static/", fs)))
 
-    // Serve index.html for any non-static file requests (fallback for React Router)
-    r.PathPrefix("/").HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Ensure you are not erroneously serving index.html for static files
-        if _, err := os.Stat(filepath.Join("./web/build", r.URL.Path)); os.IsNotExist(err) {
-            http.ServeFile(w, r, "./web/build/index.html")
-        } else {
-            http.NotFound(w, r)
-        }
-    })
+    // Simplify index.html serving for React Router fallback
+    r.PathPrefix("/").Handler(setCorrectMIMEType(http.FileServer(http.Dir("./web/build"))))
 
     // Determine port and bind address
     port := os.Getenv("PORT")
