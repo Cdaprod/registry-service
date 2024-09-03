@@ -7,10 +7,17 @@
 </head>
 <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <!-- No hardcoding build hash script tag -->
+    
+    <!-- Load Eruda for mobile debugging -->
+    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+    <script>
+        eruda.init(); // Initialize Eruda
+    </script>
 
-    <!-- Error handling script remains -->
+    <!-- Root element for React or any other JavaScript framework -->
+    <div id="root"></div>
+
+    <!-- Error handling script -->
     <script>
     window.onerror = function(message, source, lineno, colno, error) {
         console.error('An error occurred:', message, source, lineno, colno, error);
