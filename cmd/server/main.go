@@ -3,7 +3,6 @@ package main
 import (
     "context"
     "log"
-    "mime"
     "net/http"
     "os"
     "os/signal"
@@ -23,6 +22,7 @@ import (
 
 func setCorrectMIMEType(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // Set correct MIME type
         switch {
         case strings.HasSuffix(r.URL.Path, ".js"):
             w.Header().Set("Content-Type", "application/javascript")
@@ -46,7 +46,6 @@ func setCorrectMIMEType(next http.Handler) http.Handler {
         next.ServeHTTP(w, r)
     })
 }
-
 
 // initializeServer sets up and starts the HTTP server with all configurations.
 func initializeServer(router http.Handler, bindAddr string, l *zap.Logger) *http.Server {
